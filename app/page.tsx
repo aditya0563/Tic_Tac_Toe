@@ -41,7 +41,7 @@ export default function Home() {
 
         {/* Multiplayer Online */}
         <Link 
-          href="/multiplayer" 
+          href="/online" 
           className="group relative flex flex-col justify-between overflow-hidden rounded-2xl bg-white p-8 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700"
         >
           <h2 className="mb-3 text-2xl font-bold text-gray-900 dark:text-gray-100 transition-colors group-hover:text-emerald-500">

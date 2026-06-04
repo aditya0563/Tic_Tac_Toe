@@ -7,9 +7,18 @@ interface GameLayoutProps {
   turnText: string;
   onReset: () => void;
   children: ReactNode;
+  hideRestart?: boolean; // Optional flag to hide the restart button
+  hideBack?: boolean;    // Optional flag to hide the dashboard button
 }
 
-export default function GameLayout({ title, turnText, onReset, children }: GameLayoutProps) {
+export default function GameLayout({ 
+  title, 
+  turnText, 
+  onReset, 
+  children,
+  hideRestart = false,
+  hideBack = false
+}: GameLayoutProps) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
       <div className="mb-8 text-center">
@@ -22,14 +31,13 @@ export default function GameLayout({ title, turnText, onReset, children }: GameL
       </div>
 
       <div className="mb-8">
-        {/* Your grid component renders here */}
         {children}
       </div>
 
-      {/* Button Controls Container */}
+      {/* Conditionally render the buttons based on the new props */}
       <div className="flex flex-col items-center gap-5 mt-2">
-        <RestartButton onReset={onReset} />
-        <BackToDashboard />
+        {!hideRestart && <RestartButton onReset={onReset} />}
+        {!hideBack && <BackToDashboard />}
       </div>
     </main>
   );

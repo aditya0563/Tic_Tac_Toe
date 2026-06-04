@@ -1,27 +1,83 @@
-import Link from 'next/link';
+"use client";
 
-export default function MultiplayerOnline() {
+import { useState, useEffect } from "react";
+import Board, { BoardState } from "../../components/Board";
+import GameLayout from "../../components/GameLayout";
+import MatchmakingScreen, { MatchState } from "../../components/MatchmakingScreen";
+
+export default function OnlineMultiplayer() {
+  const [matchState, setMatchState] = useState<MatchState>("idle");
+  const [board, setBoard] = useState<BoardState>(Array(9).fill(null));
+  
+  // For the UI demo, we'll pretend you are 'X' and it's your turn
+  const [isMyTurn, setIsMyTurn] = useState<boolean>(true); 
+  const playerSymbol = "X";
+
+  const handleSquareClick = (index: number) => {
+    if (board[index] || !isMyTurn) return;
+
+    const newBoard = [...board];
+    newBoard[index] = playerSymbol;
+    setBoard(newBoard);
+    setIsMyTurn(false); 
+  };
+
+  const leaveMatch = () => {
+    setBoard(Array(9).fill(null));
+    setMatchState("idle");
+    setIsMyTurn(true);
+  };
+
+  // Simulate waiting for a server connection when searching
+  useEffect(() => {
+    if (matchState === "searching") {
+      const timer = setTimeout(() => {
+        setMatchState("playing");
+      }, 2000);
+      
+      // Cleanup function ensures if user clicks "Cancel", the timer stops
+      return () => clearTimeout(timer);
+    }
+  }, [matchState]);
+
+  // 1. Show the Matchmaking Screen if not currently playing
+  if (matchState !== "playing") {
+    return (
+      <MatchmakingScreen 
+        matchState={matchState}
+        onStartSearch={() => setMatchState("searching")}
+        onCancelSearch={() => setMatchState("idle")}
+      />
+    );
+  }
+
+  // 2. Show the Active Online Game Board
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-8 text-slate-100 font-sans">
-      <div className="max-w-3xl w-full text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400 mb-8">
-          Multiplayer Online
-        </h1>
-        
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-16 mb-12 shadow-lg backdrop-blur-sm">
-          <p className="text-xl text-slate-400 italic">Online matchmaking and multiplayer game logic will go here.</p>
-        </div>
-        
-        <Link 
-          href="/" 
-          className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white transition-all duration-200 border border-slate-700 hover:border-slate-600 shadow-sm"
+    <div className="relative h-full w-full">
+      {/* Leave Match Button */}
+      <div className="absolute left-4 top-4 z-50">
+        <button 
+          onClick={leaveMatch}
+          className="text-sm font-medium text-gray-500 transition-colors hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400"
         >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-          </svg>
-          Back to Dashboard
-        </Link>
+          &larr; Leave Match
+        </button>
       </div>
+
+      <GameLayout 
+        title="Online Match" 
+        turnText={isMyTurn ? "Your Turn (X)" : "Waiting for Opponent..."}
+        onReset={leaveMatch} 
+        hideRestart={true} // Add this line
+        hideBack={true}    // Add this line
+      >
+        <Board 
+          board={board} 
+          onSquareClick={handleSquareClick} 
+          size={3} 
+          disabled={!isMyTurn} 
+        />
+      </GameLayout>
     </div>
   );
 }
