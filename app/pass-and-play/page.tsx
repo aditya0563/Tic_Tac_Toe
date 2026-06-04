@@ -1,90 +1,76 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { calculateWinner, Player } from '../../utils/minimax';
+import { useState } from "react";
+import Board, { BoardState } from "../../components/Board";
+
+// We copy the simple 3x3 checkWinner logic here or import from minimax. 
+// For flexibility on pass-and-play, keeping it self-contained is easy,
+// but since the board handles rendering, we just manage state.
+const checkWinner = (squares: BoardState) => {
+  const lines = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6]
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  if (!squares.includes(null)) return 'Draw';
+  return null;
+};
 
 export default function PassAndPlay() {
-  const [board, setBoard] = useState<Player[]>(Array(9).fill(null));
-  const [xIsNext, setXIsNext] = useState<boolean>(true);
+  const [board, setBoard] = useState<BoardState>(Array(9).fill(null));
+  const [isXNext, setIsXNext] = useState<boolean>(true);
 
-  const winner = calculateWinner(board);
-  const currentPlayer = xIsNext ? 'X' : 'O';
+  const result = checkWinner(board);
+  const winner = result === 'Draw' ? null : result;
+  const isDraw = result === 'Draw';
+  const gameOver = !!winner || isDraw;
 
-  const handleClick = (index: number) => {
-    if (board[index] || winner) return;
+  const handleSquareClick = (index: number) => {
+    if (board[index] || gameOver) return;
 
     const newBoard = [...board];
-    newBoard[index] = currentPlayer;
+    newBoard[index] = isXNext ? "X" : "O";
     setBoard(newBoard);
-    setXIsNext(!xIsNext);
+    setIsXNext(!isXNext);
   };
 
-  const handleReset = () => {
+  const resetGame = () => {
     setBoard(Array(9).fill(null));
-    setXIsNext(true);
+    setIsXNext(true);
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4 font-sans">
-      <div className="max-w-md w-full flex flex-col items-center gap-8">
-        
-        {/* Header */}
-        <div className="w-full flex justify-between items-center">
-          <Link 
-            href="/"
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors font-medium flex items-center gap-2"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            Back
-          </Link>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 text-transparent bg-clip-text">
-            Pass & Play
-          </h1>
-          <div className="w-24"></div> {/* Spacer for centering */}
-        </div>
-
-        {/* Status */}
-        <div className="text-xl font-semibold h-8 flex items-center justify-center text-center">
-          {winner ? (
-            winner === 'Draw' ? (
-              <span className="text-slate-400">It's a Draw!</span>
-            ) : (
-              <span className="text-emerald-400">Player {winner} Wins!</span>
-            )
-          ) : (
-            <span className="text-slate-300">
-              Player <span className={xIsNext ? 'text-blue-400' : 'text-rose-400'}>{currentPlayer}</span>'s Turn
-            </span>
-          )}
-        </div>
-
-        {/* Board */}
-        <div className="grid grid-cols-3 gap-3 p-4 bg-slate-800/50 rounded-2xl shadow-xl border border-slate-700/50 backdrop-blur-sm">
-          {board.map((cell, index) => (
-            <button
-              key={index}
-              onClick={() => handleClick(index)}
-              disabled={!!cell || !!winner}
-              className={`w-24 h-24 sm:w-28 sm:h-28 text-5xl flex items-center justify-center rounded-xl bg-slate-800 shadow-inner transition-all duration-200
-                ${!cell && !winner ? 'hover:bg-slate-700 cursor-pointer active:scale-95' : 'cursor-default'}
-                ${cell === 'X' ? 'text-blue-400' : 'text-rose-400'}
-              `}
-            >
-              {cell}
-            </button>
-          ))}
-        </div>
-
-        {/* Reset */}
-        <button
-          onClick={handleReset}
-          className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold rounded-xl shadow-lg shadow-indigo-900/20 transition-all active:scale-95"
-        >
-          Reset Game
-        </button>
-
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
+      <div className="mb-8 text-center">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+          Pass and Play
+        </h1>
       </div>
-    </div>
+
+      <div className="mb-6 h-8 text-xl font-semibold text-gray-800 dark:text-gray-200">
+        {winner ? (
+          <span className="text-green-600 dark:text-green-400">Winner: Player {winner}</span>
+        ) : isDraw ? (
+          <span className="text-orange-500">Draw!</span>
+        ) : (
+          <span>Turn: Player {isXNext ? "1 (X)" : "2 (O)"}</span>
+        )}
+      </div>
+
+      <Board board={board} onSquareClick={handleSquareClick} size={3} disabled={gameOver} />
+
+      <button
+        onClick={resetGame}
+        className="mt-8 rounded-lg bg-indigo-600 px-6 py-2 text-white font-medium shadow hover:bg-indigo-700 transition-colors"
+      >
+        Restart Game
+      </button>
+    </main>
   );
 }
