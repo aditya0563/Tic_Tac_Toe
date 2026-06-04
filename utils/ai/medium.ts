@@ -1,4 +1,9 @@
-export function getMediumMove(): number {
-  // Dummy function returning a static number for now
-  return 0;
-}
+import { Player, getBestMove } from "../minimax";
+import { getEasyMove } from "./easy";
+
+export const getMediumMove = (board: Player[]): number => {
+  if (Math.random() > 0.5) {
+    return getBestMove(board);
+  }
+  return getEasyMove(board);
+};

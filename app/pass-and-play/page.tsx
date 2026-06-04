@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import Board, { BoardState } from "../../components/Board";
+import GameLayout from "../../components/GameLayout";
 
-// We copy the simple 3x3 checkWinner logic here or import from minimax. 
-// For flexibility on pass-and-play, keeping it self-contained is easy,
-// but since the board handles rendering, we just manage state.
 const checkWinner = (squares: BoardState) => {
   const lines = [
     [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -45,32 +43,20 @@ export default function PassAndPlay() {
     setIsXNext(true);
   };
 
+  let statusText = `Turn: Player ${isXNext ? "1 (X)" : "2 (O)"}`;
+  if (winner) {
+    statusText = `Winner: Player ${winner} 🏆`;
+  } else if (isDraw) {
+    statusText = "It's a Draw! 🤝";
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-          Pass and Play
-        </h1>
-      </div>
-
-      <div className="mb-6 h-8 text-xl font-semibold text-gray-800 dark:text-gray-200">
-        {winner ? (
-          <span className="text-green-600 dark:text-green-400">Winner: Player {winner}</span>
-        ) : isDraw ? (
-          <span className="text-orange-500">Draw!</span>
-        ) : (
-          <span>Turn: Player {isXNext ? "1 (X)" : "2 (O)"}</span>
-        )}
-      </div>
-
+    <GameLayout 
+      title="Pass and Play" 
+      turnText={statusText}
+      onReset={resetGame}
+    >
       <Board board={board} onSquareClick={handleSquareClick} size={3} disabled={gameOver} />
-
-      <button
-        onClick={resetGame}
-        className="mt-8 rounded-lg bg-indigo-600 px-6 py-2 text-white font-medium shadow hover:bg-indigo-700 transition-colors"
-      >
-        Restart Game
-      </button>
-    </main>
+    </GameLayout>
   );
 }

@@ -2,11 +2,19 @@
 
 import { useState, useEffect } from "react";
 import Board, { BoardState } from "../../components/Board";
-import { calculateWinner, getBestMove, Player } from "../../utils/minimax";
+import { calculateWinner, Player } from "../../utils/minimax";
+import GameLayout from "../../components/GameLayout";
+import DifficultySelector, { DifficultyLevel } from "../../components/DifficultySelector";
+
+import { getEasyMove } from "../../utils/ai/easy";
+import { getMediumMove } from "../../utils/ai/medium";
+import { getHardMove } from "../../utils/ai/hard";
+import { getImpossibleMove } from "../../utils/ai/impossible";
 
 export default function AI() {
+  const [difficulty, setDifficulty] = useState<DifficultyLevel | null>(null);
   const [board, setBoard] = useState<BoardState>(Array(9).fill(null));
-  const [isHumanTurn, setIsHumanTurn] = useState<boolean>(true); // Human is 'X', AI is 'O'
+  const [isHumanTurn, setIsHumanTurn] = useState<boolean>(true);
 
   const result = calculateWinner(board as Player[]);
   const winner = result === 'Draw' ? null : result;
@@ -14,7 +22,6 @@ export default function AI() {
   const gameOver = !!winner || isDraw;
 
   const handleSquareClick = (index: number) => {
-    // Prevent clicking if the square is filled, game is over, or it's not the human's turn
     if (board[index] || gameOver || !isHumanTurn) return;
 
     const newBoard = [...board];
@@ -23,12 +30,27 @@ export default function AI() {
     setIsHumanTurn(false);
   };
 
-  // Trigger AI Turn
   useEffect(() => {
-    if (!isHumanTurn && !gameOver) {
-      // Small timeout to make the AI feel more "natural" instead of instant
+    if (!isHumanTurn && !gameOver && difficulty) {
       const timer = setTimeout(() => {
-        const bestMoveIndex = getBestMove(board as Player[]);
+        let bestMoveIndex = -1;
+        const currentBoard = board as Player[];
+
+        switch (difficulty) {
+          case "easy":
+            bestMoveIndex = getEasyMove(currentBoard);
+            break;
+          case "medium":
+            bestMoveIndex = getMediumMove(currentBoard);
+            break;
+          case "hard":
+            bestMoveIndex = getHardMove(currentBoard);
+            break;
+          case "impossible":
+            bestMoveIndex = getImpossibleMove(currentBoard);
+            break;
+        }
+        
         if (bestMoveIndex !== -1) {
           const newBoard = [...board];
           newBoard[bestMoveIndex] = "O";
@@ -39,44 +61,50 @@ export default function AI() {
 
       return () => clearTimeout(timer);
     }
-  }, [isHumanTurn, board, gameOver]);
+  }, [isHumanTurn, board, gameOver, difficulty]);
 
   const resetGame = () => {
     setBoard(Array(9).fill(null));
     setIsHumanTurn(true);
   };
 
+  if (!difficulty) {
+    return <DifficultySelector onSelect={setDifficulty} />;
+  }
+
+  let statusText = `Turn: ${isHumanTurn ? "You (X)" : "AI (O)"}`;
+  if (winner) {
+    statusText = `Winner: ${winner} 🏆`;
+  } else if (isDraw) {
+    statusText = "It's a Draw! 🤝";
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 dark:bg-gray-950">
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-          Tic-Tac-Toe AI
-        </h1>
-        <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-          Powered by the Minimax Algorithm
-        </p>
+    <div className="relative w-full h-full">
+      <div className="absolute top-4 left-4 z-50">
+        <button 
+          onClick={() => {
+            setDifficulty(null);
+            resetGame();
+          }}
+          className="text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+        >
+          &larr; Change Difficulty
+        </button>
       </div>
 
-      {/* Game Status */}
-      <div className="mb-6 h-8 text-xl font-semibold text-gray-800 dark:text-gray-200">
-        {winner ? (
-          <span className="text-green-600 dark:text-green-400">Winner: {winner}</span>
-        ) : isDraw ? (
-          <span className="text-orange-500">Draw!</span>
-        ) : (
-          <span>Turn: {isHumanTurn ? "You (X)" : "AI (O)"}</span>
-        )}
-      </div>
-
-      <Board board={board} onSquareClick={handleSquareClick} size={3} disabled={gameOver || !isHumanTurn} />
-
-      {/* Reset Button */}
-      <button
-        onClick={resetGame}
-        className="mt-8 rounded-lg bg-indigo-600 px-6 py-2 text-white font-medium shadow hover:bg-indigo-700 transition-colors"
+      <GameLayout 
+        title={`AI Mode: ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`} 
+        turnText={statusText}
+        onReset={resetGame}
       >
-        Restart Game
-      </button>
-    </main>
+        <Board 
+          board={board} 
+          onSquareClick={handleSquareClick} 
+          size={3} 
+          disabled={gameOver || !isHumanTurn} 
+        />
+      </GameLayout>
+    </div>
   );
 }

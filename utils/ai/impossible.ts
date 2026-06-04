@@ -1,4 +1,5 @@
-export function getImpossibleMove(): number {
-  // Dummy function returning a static number for now
-  return 0;
-}
+import { Player, getBestMove } from "../minimax";
+
+export const getImpossibleMove = (board: Player[]): number => {
+  return getBestMove(board);
+};
